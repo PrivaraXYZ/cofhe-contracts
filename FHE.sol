@@ -162,28 +162,10 @@ library Impl {
     }
 
     /// @notice Generates a random value of a given type with the given seed, for the provided securityZone
-    /// @dev Calls the desired function
-    /// @param uintType the type of the random value to generate
-    /// @param seed the seed to use to create a random value from
-    /// @param securityZone the security zone to use for the random value
-    function random(uint8 uintType, uint256 seed, int32 securityZone) internal returns (uint256) {
-        return ITaskManager(TASK_MANAGER_ADDRESS).createRandomTask(uintType, seed, securityZone);
-    }
-
-    /// @notice Generates a random value of a given type with the given seed
-    /// @dev Calls the desired function
-    /// @param uintType the type of the random value to generate
-    /// @param seed the seed to use to create a random value from
-    function random(uint8 uintType, uint256 seed) internal returns (uint256) {
-        return random(uintType, seed, 0);
-    }
-
-    /// @notice Generates a random value of a given type
-    /// @dev Calls the desired function
-    /// @param uintType the type of the random value to generate
-    function random(uint8 uintType) internal returns (uint256) {
-        return random(uintType, 0, 0);
-    }
+    // NOTE: random functions removed - not supported by mock contracts
+    // function random(uint8 uintType, uint256 seed, int32 securityZone) internal returns (uint256)
+    // function random(uint8 uintType, uint256 seed) internal returns (uint256)
+    // function random(uint8 uintType) internal returns (uint256)
 }
 
 library FHE {
@@ -2503,86 +2485,8 @@ library FHE {
         return euint128.wrap(Impl.square(Utils.EUINT128_TFHE, euint128.unwrap(input1)));
     }
 
-    /// @notice Generates a random value of a euint8 type for provided securityZone
-    /// @dev Generates a cryptographically secure random 8-bit unsigned integer in encrypted form.
-    ///      The generated value is fully encrypted and cannot be predicted by any party.
-    /// @param securityZone The security zone identifier to use for random value generation.
-    /// @return A randomly generated encrypted 8-bit unsigned integer (euint8)
-    function randomEuint8(int32 securityZone) internal returns (euint8) {
-        return euint8.wrap(Impl.random(Utils.EUINT8_TFHE, 0, securityZone));
-    }
-    /// @notice Generates a random value of a euint8 type
-    /// @dev Generates a cryptographically secure random 8-bit unsigned integer in encrypted form
-    ///      using the default security zone (0). The generated value is fully encrypted and
-    ///      cannot be predicted by any party.
-    /// @return A randomly generated encrypted 8-bit unsigned integer (euint8)
-    function randomEuint8() internal returns (euint8) {
-        return randomEuint8(0);
-    }
-    /// @notice Generates a random value of a euint16 type for provided securityZone
-    /// @dev Generates a cryptographically secure random 16-bit unsigned integer in encrypted form.
-    ///      The generated value is fully encrypted and cannot be predicted by any party.
-    /// @param securityZone The security zone identifier to use for random value generation.
-    /// @return A randomly generated encrypted 16-bit unsigned integer (euint16)
-    function randomEuint16(int32 securityZone) internal returns (euint16) {
-        return euint16.wrap(Impl.random(Utils.EUINT16_TFHE, 0, securityZone));
-    }
-    /// @notice Generates a random value of a euint16 type
-    /// @dev Generates a cryptographically secure random 16-bit unsigned integer in encrypted form
-    ///      using the default security zone (0). The generated value is fully encrypted and
-    ///      cannot be predicted by any party.
-    /// @return A randomly generated encrypted 16-bit unsigned integer (euint16)
-    function randomEuint16() internal returns (euint16) {
-        return randomEuint16(0);
-    }
-    /// @notice Generates a random value of a euint32 type for provided securityZone
-    /// @dev Generates a cryptographically secure random 32-bit unsigned integer in encrypted form.
-    ///      The generated value is fully encrypted and cannot be predicted by any party.
-    /// @param securityZone The security zone identifier to use for random value generation.
-    /// @return A randomly generated encrypted 32-bit unsigned integer (euint32)
-    function randomEuint32(int32 securityZone) internal returns (euint32) {
-        return euint32.wrap(Impl.random(Utils.EUINT32_TFHE, 0, securityZone));
-    }
-    /// @notice Generates a random value of a euint32 type
-    /// @dev Generates a cryptographically secure random 32-bit unsigned integer in encrypted form
-    ///      using the default security zone (0). The generated value is fully encrypted and
-    ///      cannot be predicted by any party.
-    /// @return A randomly generated encrypted 32-bit unsigned integer (euint32)
-    function randomEuint32() internal returns (euint32) {
-        return randomEuint32(0);
-    }
-    /// @notice Generates a random value of a euint64 type for provided securityZone
-    /// @dev Generates a cryptographically secure random 64-bit unsigned integer in encrypted form.
-    ///      The generated value is fully encrypted and cannot be predicted by any party.
-    /// @param securityZone The security zone identifier to use for random value generation.
-    /// @return A randomly generated encrypted 64-bit unsigned integer (euint64)
-    function randomEuint64(int32 securityZone) internal returns (euint64) {
-        return euint64.wrap(Impl.random(Utils.EUINT64_TFHE, 0, securityZone));
-    }
-    /// @notice Generates a random value of a euint64 type
-    /// @dev Generates a cryptographically secure random 64-bit unsigned integer in encrypted form
-    ///      using the default security zone (0). The generated value is fully encrypted and
-    ///      cannot be predicted by any party.
-    /// @return A randomly generated encrypted 64-bit unsigned integer (euint64)
-    function randomEuint64() internal returns (euint64) {
-        return randomEuint64(0);
-    }
-    /// @notice Generates a random value of a euint128 type for provided securityZone
-    /// @dev Generates a cryptographically secure random 128-bit unsigned integer in encrypted form.
-    ///      The generated value is fully encrypted and cannot be predicted by any party.
-    /// @param securityZone The security zone identifier to use for random value generation.
-    /// @return A randomly generated encrypted 128-bit unsigned integer (euint128)
-    function randomEuint128(int32 securityZone) internal returns (euint128) {
-        return euint128.wrap(Impl.random(Utils.EUINT128_TFHE, 0, securityZone));
-    }
-    /// @notice Generates a random value of a euint128 type
-    /// @dev Generates a cryptographically secure random 128-bit unsigned integer in encrypted form
-    ///      using the default security zone (0). The generated value is fully encrypted and
-    ///      cannot be predicted by any party.
-    /// @return A randomly generated encrypted 128-bit unsigned integer (euint128)
-    function randomEuint128() internal returns (euint128) {
-        return randomEuint128(0);
-    }
+    // NOTE: random functions removed - not supported by mock contracts
+    // randomEuint8, randomEuint16, randomEuint32, randomEuint64, randomEuint128
 
     /// @notice Verifies and converts an inEbool input to an ebool encrypted type
     /// @dev Verifies the input signature and security parameters before converting to the encrypted type
