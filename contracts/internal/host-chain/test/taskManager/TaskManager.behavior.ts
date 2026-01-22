@@ -11,7 +11,9 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
 
     it("should correctly report isTrustedForwarder as false when no forwarder is set", async function () {
       const taskManager = this.taskManager.connect(this.signers.admin);
-      const isTrusted = await taskManager.isTrustedForwarder(hre.ethers.ZeroAddress);
+      const isTrusted = await taskManager.isTrustedForwarder(
+        hre.ethers.ZeroAddress,
+      );
       expect(isTrusted).to.equal(false);
     });
 
@@ -38,7 +40,9 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
       let mockForwarder: any;
 
       beforeEach(async function () {
-        const MockForwarder = await hre.ethers.getContractFactory("MockForwarder");
+        const MockForwarder = await hre.ethers.getContractFactory(
+          "MockForwarder",
+        );
         mockForwarder = await MockForwarder.deploy();
         await mockForwarder.waitForDeployment();
 
@@ -46,21 +50,23 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
         const taskManagerImpl = await TaskManager.deploy();
         await taskManagerImpl.waitForDeployment();
 
-        const ERC1967Proxy = await hre.ethers.getContractFactory("ERC1967Proxy");
-        const initData = TaskManager.interface.encodeFunctionData("initialize", [
-          this.signers.admin.address,
-          await mockForwarder.getAddress(),
-        ]);
+        const ERC1967Proxy = await hre.ethers.getContractFactory(
+          "ERC1967Proxy",
+        );
+        const initData = TaskManager.interface.encodeFunctionData(
+          "initialize",
+          [this.signers.admin.address, await mockForwarder.getAddress()],
+        );
         const proxy = await ERC1967Proxy.deploy(
           await taskManagerImpl.getAddress(),
-          initData
+          initData,
         );
         await proxy.waitForDeployment();
 
         taskManagerWithForwarderAddress = await proxy.getAddress();
         taskManagerWithForwarder = await hre.ethers.getContractAt(
           "TaskManager",
-          taskManagerWithForwarderAddress
+          taskManagerWithForwarderAddress,
         );
       });
 
@@ -71,14 +77,16 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
 
       it("should correctly report isTrustedForwarder as true for initialized forwarder", async function () {
         const isTrusted = await taskManagerWithForwarder.isTrustedForwarder(
-          await mockForwarder.getAddress()
+          await mockForwarder.getAddress(),
         );
         expect(isTrusted).to.equal(true);
       });
 
       it("should correctly report isTrustedForwarder as false for other addresses", async function () {
         const otherAddress = "0x9876543210987654321098765432109876543210";
-        const isTrusted = await taskManagerWithForwarder.isTrustedForwarder(otherAddress);
+        const isTrusted = await taskManagerWithForwarder.isTrustedForwarder(
+          otherAddress,
+        );
         expect(isTrusted).to.equal(false);
       });
 
@@ -87,19 +95,20 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
         const originalSender = signers[2]?.address || signers[0].address;
 
         const taskManagerInterface = taskManagerWithForwarder.interface;
-        const calldata = taskManagerInterface.encodeFunctionData("trustedForwarder");
+        const calldata =
+          taskManagerInterface.encodeFunctionData("trustedForwarder");
 
         const [success, returnData] = await mockForwarder.forward.staticCall(
           taskManagerWithForwarderAddress,
           calldata,
-          originalSender
+          originalSender,
         );
 
         expect(success).to.equal(true);
 
         const [returnedForwarder] = taskManagerInterface.decodeFunctionResult(
           "trustedForwarder",
-          returnData
+          returnData,
         );
         expect(returnedForwarder).to.equal(await mockForwarder.getAddress());
       });
@@ -108,40 +117,47 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
         const originalSender = "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
         const taskManagerInterface = taskManagerWithForwarder.interface;
-        const calldata = taskManagerInterface.encodeFunctionData("isInitialized");
+        const calldata =
+          taskManagerInterface.encodeFunctionData("isInitialized");
 
         const [success, returnData] = await mockForwarder.forward.staticCall(
           taskManagerWithForwarderAddress,
           calldata,
-          originalSender
+          originalSender,
         );
 
         expect(success).to.equal(true);
 
-        const [isInit] = taskManagerInterface.decodeFunctionResult("isInitialized", returnData);
+        const [isInit] = taskManagerInterface.decodeFunctionResult(
+          "isInitialized",
+          returnData,
+        );
         expect(isInit).to.equal(true);
       });
 
       it("should use forwarder address as sender when forwarder is not trusted", async function () {
-        const MockForwarder = await hre.ethers.getContractFactory("MockForwarder");
+        const MockForwarder = await hre.ethers.getContractFactory(
+          "MockForwarder",
+        );
         const untrustedForwarder = await MockForwarder.deploy();
         await untrustedForwarder.waitForDeployment();
 
         expect(
           await taskManagerWithForwarder.isTrustedForwarder(
-            await untrustedForwarder.getAddress()
-          )
+            await untrustedForwarder.getAddress(),
+          ),
         ).to.equal(false);
 
         const originalSender = "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
         const taskManagerInterface = taskManagerWithForwarder.interface;
-        const calldata = taskManagerInterface.encodeFunctionData("isInitialized");
+        const calldata =
+          taskManagerInterface.encodeFunctionData("isInitialized");
 
         const [success] = await untrustedForwarder.forward.staticCall(
           taskManagerWithForwarderAddress,
           calldata,
-          originalSender
+          originalSender,
         );
 
         expect(success).to.equal(true);

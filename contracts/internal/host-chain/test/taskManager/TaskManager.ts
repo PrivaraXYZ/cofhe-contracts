@@ -1,6 +1,9 @@
 import type { Signers } from "../types";
 import { shouldBehaveLikeTaskManagerERC2771 } from "./TaskManager.behavior";
-import { deployTaskManagerFixture, getTokensFromFaucet } from "./TaskManager.fixture";
+import {
+  deployTaskManagerFixture,
+  getTokensFromFaucet,
+} from "./TaskManager.fixture";
 import hre from "hardhat";
 
 describe("TaskManager Tests", function () {
@@ -10,7 +13,8 @@ describe("TaskManager Tests", function () {
     // get tokens from faucet if we're on localfhenix and don't have a balance
     await getTokensFromFaucet();
 
-    const { taskManager, taskManagerAddress } = await deployTaskManagerFixture();
+    const { taskManager, taskManagerAddress } =
+      await deployTaskManagerFixture();
     this.taskManager = taskManager;
     this.taskManagerAddress = taskManagerAddress;
 

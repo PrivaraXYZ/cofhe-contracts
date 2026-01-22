@@ -10,7 +10,10 @@ export async function deployTaskManagerFixture(): Promise<{
 
   // Get the deployed TaskManager
   const taskManagerAddress = "0xeA30c4B8b44078Bbf8a6ef5b9f1eC1626C7848D9";
-  const taskManager = await hre.ethers.getContractAt("TaskManager", taskManagerAddress);
+  const taskManager = await hre.ethers.getContractAt(
+    "TaskManager",
+    taskManagerAddress,
+  );
 
   return { taskManager, taskManagerAddress };
 }
