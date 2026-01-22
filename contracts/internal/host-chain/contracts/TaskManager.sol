@@ -154,6 +154,11 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
         _disableInitializers();
     }
 
+    /**
+     * @notice              Initializes the contract.
+     * @param initialOwner  Initial owner address.
+     * @param trustedForwarder_  ERC-2771 trusted forwarder address.
+     */
     function initialize(
         address initialOwner,
         address trustedForwarder_
