@@ -150,8 +150,7 @@ contract DeterministicTM is ITaskManager, Initializable, UUPSUpgradeable, Ownabl
      * @notice              Initializes the contract.
      * @param initialOwner  Initial owner address.
      */
-    function initialize(
-        address initialOwner) public initializer {
+    function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
         initialized = true;

@@ -46,17 +46,19 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
         mockForwarder = await MockForwarder.deploy();
         await mockForwarder.waitForDeployment();
 
+        // Deploy TaskManager with forwarder in constructor (OZ ERC2771ContextUpgradeable pattern)
         const TaskManager = await hre.ethers.getContractFactory("TaskManager");
-        const taskManagerImpl = await TaskManager.deploy();
+        const taskManagerImpl = await TaskManager.deploy(
+          await mockForwarder.getAddress(),
+        );
         await taskManagerImpl.waitForDeployment();
 
         const ERC1967Proxy = await hre.ethers.getContractFactory(
           "ERC1967Proxy",
         );
-        const initData = TaskManager.interface.encodeFunctionData(
-          "initialize",
-          [this.signers.admin.address, await mockForwarder.getAddress()],
-        );
+        const initData = TaskManager.interface.encodeFunctionData("initialize", [
+          this.signers.admin.address,
+        ]);
         const proxy = await ERC1967Proxy.deploy(
           await taskManagerImpl.getAddress(),
           initData,

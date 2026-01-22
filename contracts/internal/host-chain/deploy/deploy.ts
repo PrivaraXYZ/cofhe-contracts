@@ -262,7 +262,8 @@ async function upgradeTM(TMProxyContract: any, TMFactory: any, aggregatorSigner:
   const oldImplementationAddress = await getImplementationAddress(connectedImplementation);
   console.log(chalk.green("Old implementation address:", oldImplementationAddress));
 
-  const newIplDeployment = await TMFactory.deploy();
+  // Pass ZeroAddress as trusted forwarder (no meta-transactions by default)
+  const newIplDeployment = await TMFactory.deploy(ethers.ZeroAddress);
   const newIplAddress = await newIplDeployment.getAddress();
   console.log(chalk.green("Before upgrade, new implementation address:", newIplAddress));
   const tx = await connectedImplementation.upgradeToAndCall(newIplAddress, "0x");

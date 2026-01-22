@@ -7,6 +7,8 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC2771ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ITaskManager, FunctionId, Utils, EncryptedInput} from "@fhenixprotocol/cofhe-contracts/ICofhe.sol";
 
@@ -143,63 +145,42 @@ library TMCommon {
     }
 }
 
-contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
+contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2StepUpgradeable, ERC2771ContextUpgradeable {
     bool private initialized;
 
-    // Trusted forwarder for ERC-2771 meta-transactions (set at initialization)
-    address private _trustedForwarder;
-
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(address trustedForwarder_) ERC2771ContextUpgradeable(trustedForwarder_) {
         _disableInitializers();
     }
 
     /**
      * @notice              Initializes the contract.
      * @param initialOwner  Initial owner address.
-     * @param trustedForwarder_  ERC-2771 trusted forwarder address.
      */
-    function initialize(
-        address initialOwner,
-        address trustedForwarder_
-    ) public initializer {
+    function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
         initialized = true;
         verifierSigner = address(1);
         isEnabled = true;
-        _trustedForwarder = trustedForwarder_;
     }
 
-    // ERC-2771 meta-transaction support
-    function trustedForwarder() public view virtual returns (address) {
-        return _trustedForwarder;
+    // Override _msgSender and _msgData to resolve multiple inheritance
+    function _msgSender() internal view virtual override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (address) {
+        return ERC2771ContextUpgradeable._msgSender();
     }
 
-    function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
-        return forwarder == _trustedForwarder;
+    function _msgData() internal view virtual override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (bytes calldata) {
+        return ERC2771ContextUpgradeable._msgData();
     }
 
-    function _msgSender() internal view virtual override returns (address) {
-        uint256 calldataLength = msg.data.length;
-        uint256 contextSuffixLength = _contextSuffixLength();
-        if (isTrustedForwarder(msg.sender) && calldataLength >= contextSuffixLength) {
-            return address(bytes20(msg.data[calldataLength - contextSuffixLength:]));
-        }
-        return super._msgSender();
+    function _contextSuffixLength() internal view virtual override(ContextUpgradeable, ERC2771ContextUpgradeable) returns (uint256) {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
     }
 
-    function _msgData() internal view virtual override returns (bytes calldata) {
-        uint256 calldataLength = msg.data.length;
-        uint256 contextSuffixLength = _contextSuffixLength();
-        if (isTrustedForwarder(msg.sender) && calldataLength >= contextSuffixLength) {
-            return msg.data[:calldataLength - contextSuffixLength];
-        }
-        return super._msgData();
-    }
-
-    function _contextSuffixLength() internal view virtual override returns (uint256) {
-        return 20;
+    // Override to return false when no forwarder is set (ZeroAddress)
+    function isTrustedForwarder(address forwarder) public view virtual override returns (bool) {
+        return trustedForwarder() != address(0) && forwarder == trustedForwarder();
     }
 
     function setSecurityZones(int32 minSZ, int32 maxSZ) external onlyOwner {
