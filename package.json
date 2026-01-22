@@ -1,14 +1,15 @@
 {
 	"name": "@fhenixprotocol/cofhe-contracts",
 	"description": "Smart Contract Library for the CoFHE with FHE primitives",
-	"version": "0.0.13",
+	"version": "0.0.14",
 	"author": {
-		"name": "FhenixProtocol",
-		"url": "https://github.com/FhenixProtocol/cofhe-contracts"
+		"name": "PrivaraXYZ",
+		"url": "https://github.com/PrivaraXYZ/cofhe-contracts"
 	},
 	"files": [
-		"FHE.sol",
-		"ICofhe.sol"
+		"contracts/FHE.sol",
+		"contracts/ICofhe.sol",
+		"contracts/internal"
 	],
 	"keywords": [
 		"blockchain",
@@ -20,7 +21,9 @@
 		"privacy",
 		"coprocessor",
 		"fhenix",
-		"cofhe"
+		"cofhe",
+		"meta-transactions",
+		"erc2771"
 	],
 	"publishConfig": {
 		"access": "public"
