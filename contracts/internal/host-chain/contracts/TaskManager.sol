@@ -190,10 +190,21 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
 
     /**
      * @notice Sets the trusted forwarder address
-     * @param forwarder The new trusted forwarder address
+     * @param forwarder The new trusted forwarder address (use address(0) to disable)
      */
     function setTrustedForwarder(address forwarder) external onlyOwner {
+        address oldForwarder = _trustedForwarder;
         _trustedForwarder = forwarder;
+        emit TrustedForwarderChanged(oldForwarder, forwarder);
+    }
+
+    /**
+     * @notice Clears the trusted forwarder, disabling meta-transaction support
+     */
+    function clearTrustedForwarder() external onlyOwner {
+        address oldForwarder = _trustedForwarder;
+        _trustedForwarder = address(0);
+        emit TrustedForwarderChanged(oldForwarder, address(0));
     }
 
     /**
@@ -262,6 +273,7 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
     event TaskCreated(uint256 ctHash, string operation, uint256 input1, uint256 input2, uint256 input3);
     event ProtocolNotification(uint256 ctHash, string operation, string errorMessage);
     event DecryptionResult(uint256 ctHash, uint256 result, address indexed requestor);
+    event TrustedForwarderChanged(address indexed oldForwarder, address indexed newForwarder);
 
     struct Task {
         address creator;
