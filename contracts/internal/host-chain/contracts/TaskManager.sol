@@ -146,8 +146,7 @@ library TMCommon {
 contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     bool private initialized;
 
-    /// @notice Trusted forwarder for ERC-2771 meta-transactions (immutable after initialization)
-    /// @dev Set during initialize() and can only be changed via contract upgrade
+    // Trusted forwarder for ERC-2771 meta-transactions (set at initialization)
     address private _trustedForwarder;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -155,13 +154,6 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
         _disableInitializers();
     }
 
-    /**
-     * @notice              Initializes the contract.
-     * @param initialOwner  Initial owner address.
-     * @param trustedForwarder_  Trusted forwarder address for ERC-2771 meta-transactions.
-     *                           Use address(0) to disable meta-transaction support.
-     *                           Can only be changed via contract upgrade.
-     */
     function initialize(
         address initialOwner,
         address trustedForwarder_
@@ -174,31 +166,15 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
         _trustedForwarder = trustedForwarder_;
     }
 
-    // =============================================================
-    //                     ERC-2771 META-TRANSACTIONS
-    // =============================================================
-
-    /**
-     * @notice Returns the trusted forwarder address
-     * @return The address of the trusted forwarder
-     */
+    // ERC-2771 meta-transaction support
     function trustedForwarder() public view virtual returns (address) {
         return _trustedForwarder;
     }
 
-    /**
-     * @notice Checks if an address is the trusted forwarder
-     * @param forwarder Address to check
-     * @return True if the address is the trusted forwarder
-     */
     function isTrustedForwarder(address forwarder) public view virtual returns (bool) {
         return forwarder == _trustedForwarder;
     }
 
-    /**
-     * @dev Override _msgSender to support ERC-2771 meta-transactions
-     * @return The message sender - original user for meta-tx, msg.sender for direct calls
-     */
     function _msgSender() internal view virtual override returns (address) {
         uint256 calldataLength = msg.data.length;
         uint256 contextSuffixLength = _contextSuffixLength();
@@ -208,10 +184,6 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
         return super._msgSender();
     }
 
-    /**
-     * @dev Override _msgData to support ERC-2771 meta-transactions
-     * @return The message data without the appended sender for meta-tx
-     */
     function _msgData() internal view virtual override returns (bytes calldata) {
         uint256 calldataLength = msg.data.length;
         uint256 contextSuffixLength = _contextSuffixLength();
@@ -221,16 +193,9 @@ contract TaskManager is ITaskManager, Initializable, UUPSUpgradeable, Ownable2St
         return super._msgData();
     }
 
-    /**
-     * @dev Returns the length of the context suffix (20 bytes for address)
-     */
     function _contextSuffixLength() internal view virtual override returns (uint256) {
         return 20;
     }
-
-    // =============================================================
-    //                     SECURITY ZONES
-    // =============================================================
 
     function setSecurityZones(int32 minSZ, int32 maxSZ) external onlyOwner {
         securityZoneMin = minSZ;
