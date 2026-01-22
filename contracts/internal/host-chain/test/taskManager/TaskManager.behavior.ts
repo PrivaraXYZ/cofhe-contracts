@@ -7,21 +7,22 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
     //                     BASIC FORWARDER TESTS
     // =============================================================
 
-    it("should have no trusted forwarder by default", async function () {
+    it("should have no trusted forwarder when initialized with zero address", async function () {
+      // The default deployment (via deploy scripts) initializes with zero address forwarder
       const taskManager = this.taskManager.connect(this.signers.admin);
 
       const forwarder = await taskManager.trustedForwarder();
       expect(forwarder).to.equal(hre.ethers.ZeroAddress);
     });
 
-    it("should correctly report isTrustedForwarder as false for zero address", async function () {
+    it("should correctly report isTrustedForwarder as false when no forwarder is set", async function () {
       const taskManager = this.taskManager.connect(this.signers.admin);
 
       const isTrusted = await taskManager.isTrustedForwarder(hre.ethers.ZeroAddress);
       expect(isTrusted).to.equal(false);
     });
 
-    it("should correctly report isTrustedForwarder as false for random address", async function () {
+    it("should correctly report isTrustedForwarder as false for random address when no forwarder set", async function () {
       const taskManager = this.taskManager.connect(this.signers.admin);
       const randomAddress = "0x1234567890123456789012345678901234567890";
 
@@ -29,203 +30,97 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
       expect(isTrusted).to.equal(false);
     });
 
-    it("should allow owner to set trusted forwarder", async function () {
+    // =============================================================
+    //                     IMMUTABILITY TESTS
+    // =============================================================
+
+    it("should not have setTrustedForwarder function (immutable pattern)", async function () {
       const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
 
-      await taskManager.setTrustedForwarder(forwarderAddress);
-
-      const forwarder = await taskManager.trustedForwarder();
-      expect(forwarder).to.equal(forwarderAddress);
+      // Verify that setTrustedForwarder is not a function on the contract
+      // This confirms we're using the immutable forwarder pattern
+      expect(taskManager.setTrustedForwarder).to.be.undefined;
     });
 
-    it("should correctly report isTrustedForwarder after setting", async function () {
+    it("should not have clearTrustedForwarder function (immutable pattern)", async function () {
       const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
 
-      await taskManager.setTrustedForwarder(forwarderAddress);
-
-      const isTrusted = await taskManager.isTrustedForwarder(forwarderAddress);
-      expect(isTrusted).to.equal(true);
-
-      // Other addresses should still be false
-      const otherAddress = "0x9876543210987654321098765432109876543210";
-      const isOtherTrusted = await taskManager.isTrustedForwarder(otherAddress);
-      expect(isOtherTrusted).to.equal(false);
-    });
-
-    it("should allow owner to update trusted forwarder", async function () {
-      const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress1 = "0x1234567890123456789012345678901234567890";
-      const forwarderAddress2 = "0x9876543210987654321098765432109876543210";
-
-      await taskManager.setTrustedForwarder(forwarderAddress1);
-      expect(await taskManager.trustedForwarder()).to.equal(forwarderAddress1);
-
-      await taskManager.setTrustedForwarder(forwarderAddress2);
-      expect(await taskManager.trustedForwarder()).to.equal(forwarderAddress2);
-
-      // First forwarder should no longer be trusted
-      expect(await taskManager.isTrustedForwarder(forwarderAddress1)).to.equal(false);
-      expect(await taskManager.isTrustedForwarder(forwarderAddress2)).to.equal(true);
-    });
-
-    it("should allow owner to clear trusted forwarder by setting to zero address", async function () {
-      const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
-
-      await taskManager.setTrustedForwarder(forwarderAddress);
-      expect(await taskManager.trustedForwarder()).to.equal(forwarderAddress);
-
-      await taskManager.setTrustedForwarder(hre.ethers.ZeroAddress);
-      expect(await taskManager.trustedForwarder()).to.equal(hre.ethers.ZeroAddress);
-      expect(await taskManager.isTrustedForwarder(forwarderAddress)).to.equal(false);
-    });
-
-    it("should revert when non-owner tries to set trusted forwarder", async function () {
-      // Get a non-owner signer
-      const signers = await hre.ethers.getSigners();
-      const nonOwner = signers[1];
-
-      if (!nonOwner) {
-        console.log("Skipping test: no second signer available");
-        return;
-      }
-
-      const taskManager = this.taskManager.connect(nonOwner);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
-
-      await expect(
-        taskManager.setTrustedForwarder(forwarderAddress)
-      ).to.be.revertedWithCustomError(taskManager, "OwnableUnauthorizedAccount");
+      // Verify that clearTrustedForwarder is not a function on the contract
+      expect(taskManager.clearTrustedForwarder).to.be.undefined;
     });
 
     // =============================================================
-    //                     EVENT TESTS
+    //                     INITIALIZATION WITH FORWARDER TESTS
     // =============================================================
 
-    it("should emit TrustedForwarderChanged event when setting forwarder", async function () {
-      const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
-
-      await expect(taskManager.setTrustedForwarder(forwarderAddress))
-        .to.emit(taskManager, "TrustedForwarderChanged")
-        .withArgs(hre.ethers.ZeroAddress, forwarderAddress);
-    });
-
-    it("should emit TrustedForwarderChanged event when updating forwarder", async function () {
-      const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress1 = "0x1234567890123456789012345678901234567890";
-      const forwarderAddress2 = "0x9876543210987654321098765432109876543210";
-
-      await taskManager.setTrustedForwarder(forwarderAddress1);
-
-      await expect(taskManager.setTrustedForwarder(forwarderAddress2))
-        .to.emit(taskManager, "TrustedForwarderChanged")
-        .withArgs(forwarderAddress1, forwarderAddress2);
-    });
-
-    it("should emit TrustedForwarderChanged event when clearing forwarder", async function () {
-      const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
-
-      await taskManager.setTrustedForwarder(forwarderAddress);
-
-      await expect(taskManager.clearTrustedForwarder())
-        .to.emit(taskManager, "TrustedForwarderChanged")
-        .withArgs(forwarderAddress, hre.ethers.ZeroAddress);
-    });
-
-    // =============================================================
-    //                     clearTrustedForwarder TESTS
-    // =============================================================
-
-    it("should allow owner to clear trusted forwarder using clearTrustedForwarder", async function () {
-      const taskManager = this.taskManager.connect(this.signers.admin);
-      const forwarderAddress = "0x1234567890123456789012345678901234567890";
-
-      await taskManager.setTrustedForwarder(forwarderAddress);
-      expect(await taskManager.trustedForwarder()).to.equal(forwarderAddress);
-
-      await taskManager.clearTrustedForwarder();
-      expect(await taskManager.trustedForwarder()).to.equal(hre.ethers.ZeroAddress);
-    });
-
-    it("should revert when non-owner tries to clear trusted forwarder", async function () {
-      const signers = await hre.ethers.getSigners();
-      const nonOwner = signers[1];
-
-      if (!nonOwner) {
-        console.log("Skipping test: no second signer available");
-        return;
-      }
-
-      const taskManager = this.taskManager.connect(nonOwner);
-
-      await expect(
-        taskManager.clearTrustedForwarder()
-      ).to.be.revertedWithCustomError(taskManager, "OwnableUnauthorizedAccount");
-    });
-
-    // =============================================================
-    //                     META-TRANSACTION FORWARDING TESTS
-    // =============================================================
-
-    describe("Meta-Transaction Forwarding", function () {
+    describe("TaskManager with Forwarder", function () {
+      let taskManagerWithForwarder: any;
+      let taskManagerWithForwarderAddress: string;
       let mockForwarder: any;
 
       beforeEach(async function () {
-        // Deploy the MockForwarder contract
+        // Deploy a fresh MockForwarder
         const MockForwarder = await hre.ethers.getContractFactory("MockForwarder");
         mockForwarder = await MockForwarder.deploy();
         await mockForwarder.waitForDeployment();
 
-        // Set the mock forwarder as trusted
-        const taskManager = this.taskManager.connect(this.signers.admin);
-        await taskManager.setTrustedForwarder(await mockForwarder.getAddress());
+        // Deploy a new TaskManager with the forwarder set
+        const TaskManager = await hre.ethers.getContractFactory("TaskManager");
+        const taskManagerImpl = await TaskManager.deploy();
+        await taskManagerImpl.waitForDeployment();
+
+        // Deploy proxy and initialize with forwarder
+        const ERC1967Proxy = await hre.ethers.getContractFactory("ERC1967Proxy");
+        const initData = TaskManager.interface.encodeFunctionData("initialize", [
+          this.signers.admin.address,
+          await mockForwarder.getAddress(),
+        ]);
+        const proxy = await ERC1967Proxy.deploy(
+          await taskManagerImpl.getAddress(),
+          initData
+        );
+        await proxy.waitForDeployment();
+
+        taskManagerWithForwarderAddress = await proxy.getAddress();
+        taskManagerWithForwarder = await hre.ethers.getContractAt(
+          "TaskManager",
+          taskManagerWithForwarderAddress
+        );
       });
 
-      it("should extract correct _msgSender from forwarded call", async function () {
-        const taskManager = this.taskManager.connect(this.signers.admin);
-        const signers = await hre.ethers.getSigners();
-        const originalSender = signers[2] || signers[0]; // Use a different signer as the "original" user
-
-        // Encode a call to trustedForwarder() - a simple view function
-        // We'll test by calling isAllowed which uses _msgSender internally
-        // First, let's verify the forwarder is set correctly
-        expect(await taskManager.isTrustedForwarder(await mockForwarder.getAddress())).to.equal(true);
-
-        // The forwarded call should see originalSender as _msgSender
-        // We can verify this indirectly by checking that the forwarder address is trusted
-        const forwarderAddress = await mockForwarder.getAddress();
-        expect(await taskManager.trustedForwarder()).to.equal(forwarderAddress);
+      it("should have trusted forwarder set from initialization", async function () {
+        const forwarder = await taskManagerWithForwarder.trustedForwarder();
+        expect(forwarder).to.equal(await mockForwarder.getAddress());
       });
 
-      it("should use msg.sender when call is not from trusted forwarder", async function () {
-        const taskManager = this.taskManager.connect(this.signers.admin);
-
-        // Clear the trusted forwarder
-        await taskManager.clearTrustedForwarder();
-
-        // Direct calls should use msg.sender (the admin)
-        // This is verified by the fact that onlyOwner functions still work
-        const newForwarder = "0x1111111111111111111111111111111111111111";
-        await taskManager.setTrustedForwarder(newForwarder);
-        expect(await taskManager.trustedForwarder()).to.equal(newForwarder);
+      it("should correctly report isTrustedForwarder as true for initialized forwarder", async function () {
+        const isTrusted = await taskManagerWithForwarder.isTrustedForwarder(
+          await mockForwarder.getAddress()
+        );
+        expect(isTrusted).to.equal(true);
       });
+
+      it("should correctly report isTrustedForwarder as false for other addresses", async function () {
+        const otherAddress = "0x9876543210987654321098765432109876543210";
+        const isTrusted = await taskManagerWithForwarder.isTrustedForwarder(otherAddress);
+        expect(isTrusted).to.equal(false);
+      });
+
+      // =============================================================
+      //                     META-TRANSACTION FORWARDING TESTS
+      // =============================================================
 
       it("should correctly forward a call through the MockForwarder", async function () {
-        const taskManagerAddress = this.taskManagerAddress;
         const signers = await hre.ethers.getSigners();
         const originalSender = signers[2]?.address || signers[0].address;
 
         // Encode the trustedForwarder() function call
-        const taskManagerInterface = this.taskManager.interface;
+        const taskManagerInterface = taskManagerWithForwarder.interface;
         const calldata = taskManagerInterface.encodeFunctionData("trustedForwarder");
 
         // Forward the call through MockForwarder
         const [success, returnData] = await mockForwarder.forward.staticCall(
-          taskManagerAddress,
+          taskManagerWithForwarderAddress,
           calldata,
           originalSender
         );
@@ -233,26 +128,24 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
         expect(success).to.equal(true);
 
         // Decode the return value
-        const [returnedForwarder] = taskManagerInterface.decodeFunctionResult("trustedForwarder", returnData);
+        const [returnedForwarder] = taskManagerInterface.decodeFunctionResult(
+          "trustedForwarder",
+          returnData
+        );
         expect(returnedForwarder).to.equal(await mockForwarder.getAddress());
       });
 
-      it("should correctly identify original sender in forwarded call with sufficient calldata", async function () {
-        // This test verifies that when a call comes from the trusted forwarder
-        // with the original sender appended, the contract correctly identifies the original sender
-        const taskManagerAddress = this.taskManagerAddress;
-        const signers = await hre.ethers.getSigners();
-
+      it("should correctly identify original sender in forwarded call", async function () {
         // The original sender we want to appear as
         const originalSender = "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
-        // Encode a call to isInitialized() - simple view function that should succeed
-        const taskManagerInterface = this.taskManager.interface;
+        // Encode a call to isInitialized() - simple view function
+        const taskManagerInterface = taskManagerWithForwarder.interface;
         const calldata = taskManagerInterface.encodeFunctionData("isInitialized");
 
         // Forward through MockForwarder with the original sender
         const [success, returnData] = await mockForwarder.forward.staticCall(
-          taskManagerAddress,
+          taskManagerWithForwarderAddress,
           calldata,
           originalSender
         );
@@ -265,32 +158,39 @@ export function shouldBehaveLikeTaskManagerERC2771(): void {
       });
 
       it("should use forwarder address as sender when forwarder is not trusted", async function () {
-        const taskManager = this.taskManager.connect(this.signers.admin);
-
         // Deploy a second forwarder that is NOT trusted
         const MockForwarder = await hre.ethers.getContractFactory("MockForwarder");
         const untrustedForwarder = await MockForwarder.deploy();
         await untrustedForwarder.waitForDeployment();
 
-        // The trusted forwarder is still mockForwarder, not untrustedForwarder
-        expect(await taskManager.isTrustedForwarder(await untrustedForwarder.getAddress())).to.equal(false);
+        // The trusted forwarder is mockForwarder, not untrustedForwarder
+        expect(
+          await taskManagerWithForwarder.isTrustedForwarder(
+            await untrustedForwarder.getAddress()
+          )
+        ).to.equal(false);
 
         // Calls from untrustedForwarder should NOT extract the appended sender
-        // Instead, _msgSender() should return the untrusted forwarder's address
-        const taskManagerAddress = this.taskManagerAddress;
         const originalSender = "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF";
 
-        const taskManagerInterface = this.taskManager.interface;
+        const taskManagerInterface = taskManagerWithForwarder.interface;
         const calldata = taskManagerInterface.encodeFunctionData("isInitialized");
 
         // This call should succeed but _msgSender() would be the untrusted forwarder
         const [success] = await untrustedForwarder.forward.staticCall(
-          taskManagerAddress,
+          taskManagerWithForwarderAddress,
           calldata,
           originalSender
         );
 
         expect(success).to.equal(true);
+      });
+
+      it("should use msg.sender for direct calls (not through forwarder)", async function () {
+        // Direct calls to the contract should use msg.sender normally
+        // We verify this by checking that the contract works as expected
+        const isInit = await taskManagerWithForwarder.isInitialized();
+        expect(isInit).to.equal(true);
       });
     });
   });
